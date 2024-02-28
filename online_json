@@ -1,0 +1,29 @@
+import json
+
+def parse_json_file_in_chunks(filename):
+    with open(filename, 'r') as file:
+        record = None
+        start_reading = False  # Flag to indicate when to start processing lines
+        for line in file:
+            stripped_line = line.strip()
+            if stripped_line.startswith('[{'):
+                start_reading = True
+                record = stripped_line[1:]  # Remove the '[' before starting the record
+            elif start_reading:
+                if record is not None:
+                    record += stripped_line
+                    if stripped_line.endswith('},'):  # Check if the record ends, considering comma at the end
+                        record = record.rstrip(',')  # Remove trailing comma if present
+                        yield json.loads(record)  # Yield the current record as a dictionary
+                        record = None  # Reset for the next record
+                    elif stripped_line.endswith('}]'):  # Check for the end of the array
+                        record = record.rstrip('}]')  # Remove trailing '}]'
+                        yield json.loads(record)
+                        break  # End of the array, stop processing
+                    elif stripped_line.endswith('}'):  # Check if it's a record without a trailing comma
+                        yield json.loads(record)
+                        record = None  # Reset for the next record
+
+# Replace 'your_file.json' with the path to your actual JSON file
+for item in parse_json_file_in_chunks('your_file.json'):
+    print(item)  # Process each dictionary here
