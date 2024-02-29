@@ -1,0 +1,49 @@
+def find_independent_subgraphs(graph):
+    # Reverse the graph
+    reverse_graph = {node: [] for node in graph}
+    for node, edges in graph.items():
+        for edge in edges:
+            reverse_graph[edge].append(node)
+
+    def dfs(current_node, visited, current_graph, reverse=False):
+        if current_node in visited:
+            return
+        visited.add(current_node)
+        current_graph.add(current_node)
+        next_nodes = reverse_graph[current_node] if reverse else graph[current_node]
+        for next_node in next_nodes:
+            dfs(next_node, visited, current_graph, reverse)
+
+    visited = set()
+    subgraphs = []
+
+    for node in graph:
+        if node not in visited:
+            current_subgraph = set()
+            dfs(node, visited, current_subgraph)
+            
+            # Check for reverse connections to ensure independence
+            reverse_visited = set()
+            for sub_node in current_subgraph:
+                dfs(sub_node, reverse_visited, set(), reverse=True)
+            
+            # If reverse DFS covers the subgraph, it's independent
+            if current_subgraph == reverse_visited:
+                subgraphs.append(current_subgraph)
+
+    return subgraphs
+
+# Example graph
+graph = {
+    'A': ['B'],
+    'B': ['C'],
+    'C': ['A', 'D'],
+    'D': [],
+    'E': ['F'],
+    'F': ['G'],
+    'G': ['E'],
+    'H': ['I'],
+    'I': [],
+}
+
+find_independent_subgraphs(graph)
