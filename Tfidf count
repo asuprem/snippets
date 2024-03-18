@@ -1,0 +1,31 @@
+import numpy as np
+
+# Assume 'tfidf_matrix' is your TF-IDF sparse matrix
+# and 'vectorizer' is your TfidfVectorizer instance
+
+feature_names = np.array(vectorizer.get_feature_names_out())
+
+# Step 1: Top TF-IDF words for each abstract entry
+top_words_per_abstract = {}
+for i, row in enumerate(tfidf_matrix):
+    # For each document, sort the TF-IDF scores
+    sorted_indices = row.toarray().argsort()[0, ::-1]
+    # Select the top n terms for this document
+    top_n = 10  # You can change this to get more or fewer terms
+    top_features = feature_names[sorted_indices[:top_n]]
+    top_scores = row.toarray()[0, sorted_indices[:top_n]]
+    top_words_per_abstract[i] = list(zip(top_features, top_scores))
+
+# Step 2: Top TF-IDF words across the entire corpus
+# Sum TF-IDF scores for each term across all documents
+summed_tfidf = tfidf_matrix.sum(axis=0)
+sorted_indices = np.argsort(summed_tfidf).A1[::-1]
+top_n = 10  # Overall top n words in the corpus
+top_features_corpus = feature_names[sorted_indices[:top_n]]
+top_scores_corpus = summed_tfidf[0, sorted_indices[:top_n]].A1
+
+top_words_across_corpus = list(zip(top_features_corpus, top_scores_corpus))
+
+# Now you have:
+# top_words_per_abstract - a dictionary where each key is the document index and the value is a list of tuples (word, score)
+# top_words_across_corpus - a list of tuples (word, score) for the top terms across the entire corpus
