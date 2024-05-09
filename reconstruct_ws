@@ -1,0 +1,35 @@
+from scapy.all import rdpcap, wrpcap, IP
+
+# Function to filter packets by IP and direction
+def filter_packets_by_ip(pcap_file, target_ip):
+    packets = rdpcap(pcap_file)
+    sent_packets = []
+    received_packets = []
+
+    for packet in packets:
+        if IP in packet:
+            if packet[IP].src == target_ip:
+                sent_packets.append(packet)
+            elif packet[IP].dst == target_ip:
+                received_packets.append(packet)
+
+    return sent_packets, received_packets
+
+# Main execution
+def main(pcap_file, target_ip):
+    sent_packets, received_packets = filter_packets_by_ip(pcap_file, target_ip)
+
+    sent_file = f"sent_to_{target_ip}.pcapng"
+    received_file = f"received_from_{target_ip}.pcapng"
+
+    wrpcap(sent_file, sent_packets)
+    wrpcap(received_file, received_packets)
+
+    print(f"Packets sent to {target_ip} have been saved to {sent_file}")
+    print(f"Packets received from {target_ip} have been saved to {received_file}")
+
+# Example usage
+pcap_file = r"C:\path\to\your\file.pcapng"
+target_ip = "192.168.1.1"  # Replace with the target IP address
+
+main(pcap_file, target_ip)
