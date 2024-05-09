@@ -1,0 +1,41 @@
+from scapy.all import rdpcap, IP, Raw
+
+# Function to filter packets by IP and extract payloads
+def filter_packets_by_ip(pcap_file, target_ip):
+    packets = rdpcap(pcap_file)
+    sent_payloads = []
+    received_payloads = []
+
+    for packet in packets:
+        if IP in packet and Raw in packet:
+            if packet[IP].src == target_ip:
+                sent_payloads.append(bytes(packet[Raw].load))
+            elif packet[IP].dst == target_ip:
+                received_payloads.append(bytes(packet[Raw].load))
+
+    return sent_payloads, received_payloads
+
+# Function to save payloads to a binary file
+def save_payloads_to_file(filename, payloads):
+    with open(filename, 'wb') as file:
+        for payload in payloads:
+            file.write(payload)
+
+# Main execution
+def main(pcap_file, target_ip):
+    sent_payloads, received_payloads = filter_packets_by_ip(pcap_file, target_ip)
+
+    sent_file = f"sent_to_{target_ip}.bin"
+    received_file = f"received_from_{target_ip}.bin"
+
+    save_payloads_to_file(sent_file, sent_payloads)
+    save_payloads_to_file(received_file, received_payloads)
+
+    print(f"Data sent to {target_ip} has been saved to {sent_file}")
+    print(f"Data received from {target_ip} has been saved to {received_file}")
+
+# Example usage
+pcap_file = r"C:\path\to\your\file.pcapng"
+target_ip = "192.168.1.1"  # Replace with the target IP address
+
+main(pcap_file, target_ip)
