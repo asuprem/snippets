@@ -1,0 +1,50 @@
+from scapy.all import rdpcap, PcapReader
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+def analyze_traffic_bursts(pcap_file):
+    print("Reading pcap file...")
+    reader = PcapReader(pcap_file)
+    times = []
+    sizes = []
+
+    for pkt in reader:
+        if pkt.haslayer("IP"):
+            times.append(pkt.time)
+            sizes.append(len(pkt))
+
+    reader.close()
+
+    # Create DataFrame
+    df = pd.DataFrame({'Time': times, 'Size': sizes})
+    df['Time'] = pd.to_datetime(df['Time'], unit='s')
+    df.set_index('Time', inplace=True)
+
+    # Resample data per minute
+    traffic_per_minute = df['Size'].resample('T').sum()
+
+    # Calculate mean and standard deviation
+    mean_traffic = traffic_per_minute.mean()
+    std_traffic = traffic_per_minute.std()
+
+    # Identify bursts (any interval with traffic greater than mean + 2*std)
+    bursts = traffic_per_minute[traffic_per_minute > (mean_traffic + 2 * std_traffic)]
+
+    print("Bursts of traffic identified at:")
+    print(bursts)
+
+    # Plotting
+    plt.figure(figsize=(14, 7))
+    plt.plot(traffic_per_minute.index, traffic_per_minute.values, label='Traffic per minute')
+    plt.scatter(bursts.index, bursts.values, color='red', label='Bursts', zorder=5)
+    plt.title('Traffic Bursts Identification')
+    plt.xlabel('Time')
+    plt.ylabel('Traffic Volume (bytes)')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+# Usage
+pcap_file = 'your_pcap_file.pcapng'  # Specify your pcap file path
+analyze_traffic_bursts(pcap_file)
