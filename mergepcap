@@ -1,0 +1,26 @@
+# Set the parent directory where the subdirectories are located
+$parentDir = "C:\path\to\parent\directory"
+
+# Get all subdirectories
+$subDirs = Get-ChildItem -Path $parentDir -Directory
+
+foreach ($subDir in $subDirs) {
+    # Get the name of the subdirectory
+    $subDirName = $subDir.Name
+    
+    # Get all pcapng files in the subdirectory
+    $pcapngFiles = Get-ChildItem -Path $subDir.FullName -Filter *.pcapng
+    
+    # Create a list of file paths to pass to mergecap
+    $fileList = $pcapngFiles | ForEach-Object { $_.FullName } -join " "
+    
+    # Define the output file name
+    $outputFile = "$parentDir\$subDirName.pcapng"
+    
+    # Run mergecap to merge the files
+    $mergecapCommand = "mergecap -w `"$outputFile`" $fileList"
+    Invoke-Expression $mergecapCommand
+    
+    # Optional: Output a message indicating completion for the current directory
+    Write-Output "Merged files in $subDirName to $outputFile"
+}
